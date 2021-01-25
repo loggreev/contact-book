@@ -1,7 +1,8 @@
 # asks the user to enter a choice from the given options
 # if options is a dictionary, a key represents the displayed text and its value is what is returned
+# if return_key is true, then the dictionary's key is returned instead
 # if options is a list or tuple, the selected value is returned
-def get_choice(options, text = ''):
+def get_choice(options, text = '', return_key = False):
     options_type = None
     if type(options) is dict:
         options_type = 'dict'
@@ -32,20 +33,23 @@ def get_choice(options, text = ''):
             continue
         
         if options_type == 'dict':
-            choice = indexed_options[choice]
-            return options[choice]
+            if return_key:
+                choice = indexed_options[choice]
+                return choice
+            else:
+                choice = indexed_options[choice]
+                return options[choice]
         elif options_type == 'list':
             return options[choice]
         
 # returns a list of choices selected by the user
-def get_choices(options, text = ''):
-    return_str = '(Return)'
-    if type(options) is dict:
+def get_choices(options_ref, text = '', return_str = '(Return)'):
+    # create a new set to avoid overwriting the one passed in
+    if type(options_ref) is dict:
+        options = dict(options_ref)
         options[return_str] = return_str
-    elif type(options) is list:
-        options.append(return_str)
-    elif type(options) is tuple:
-        options = list(options)
+    elif type(options_ref) is list or type(options_ref) is tuple:
+        options = list(options_ref)
         options.append(return_str)
     else:
         raise Exception('get_choices must be used with dictionaries, lists, or tuples!')
@@ -54,11 +58,17 @@ def get_choices(options, text = ''):
     choices = []
     # loop until all options exhausted or user wants to return
     while True:
-        choice = get_choice(options,text)
+        choice = get_choice(options, text, return_key=True)
         if choice == return_str:
             break
-        options.remove(choice)
-        choices.append(choice)
+        if type(options) is dict:
+            choices.append(options[choice])
+            del options[choice]
+        elif type(options) is list:
+            choices.append(choice)
+            options.remove(choice)
+            
         if len(options) == 1:
             break
+        
     return choices
