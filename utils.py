@@ -39,13 +39,23 @@ def get_choice(options, text = ''):
         
 # returns a list of choices selected by the user
 def get_choices(options, text = ''):
-    options.append('(Return)')
-    text += '\nChoose the (Return) option when you are done.'
+    return_str = '(Return)'
+    if type(options) is dict:
+        options[return_str] = return_str
+    elif type(options) is list:
+        options.append(return_str)
+    elif type(options) is tuple:
+        options = list(options)
+        options.append(return_str)
+    else:
+        raise Exception('get_choices must be used with dictionaries, lists, or tuples!')
+    
+    text += f'\nChoose the {return_str} option when you are done.'
     choices = []
     # loop until all options exhausted or user wants to return
     while True:
         choice = get_choice(options,text)
-        if choice == '(Return)':
+        if choice == return_str:
             break
         options.remove(choice)
         choices.append(choice)
