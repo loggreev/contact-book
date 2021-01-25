@@ -1,6 +1,6 @@
 # this program lets a user perform various actions on a contact book database
 # table name is contacts
-# columns are first_name, last_name, phone_number, email
+# columns are phone_number, first_name, last_name, email
 
 import sqlite3 # database
 import create_database as create # create a sample database if it doesn't exist yet
@@ -48,7 +48,7 @@ def create_contact(conn, c):
     last_name = input('Contact\'s last name: ')
     email = input('Contact\'s email address: ')
     
-    values = (first_name, last_name, phone_number, email)
+    values = (phone_number, first_name, last_name, email)
     
     try:
         c.execute('insert into contacts values (?,?,?,?)', values)
