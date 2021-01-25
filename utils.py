@@ -32,6 +32,8 @@ def get_choice(options, text = '', return_key = False):
             print('Invalid choice.\n')
             continue
         
+        print()
+        
         if options_type == 'dict':
             if return_key:
                 choice = indexed_options[choice]
