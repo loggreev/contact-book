@@ -5,10 +5,11 @@
 import sqlite3 # database
 import os # removing files
 import os.path # file paths
+import csv # reading csv files
 
 db_file_name = 'contact book.db'
 
-def main():
+def create_database():
     # see if database already exists
     if os.path.exists(db_file_name):
         # if it does, ask user if they want to replace it
@@ -25,12 +26,26 @@ def main():
     # connect to sqlite
     conn = sqlite3.connect(db_file_name)
     c = conn.cursor()
+    # create table
+    c.execute('''create table contacts (
+                    first_name text,
+                    last_name text, 
+                    phone_number text primary key,
+                    email text
+                )''')
     
     # load mock data file
-    
-    # create table
-    
-    # for each entry in file, insert values into table
+    with open('MOCK_DATA.csv') as datafile:
+        reader = csv.reader(datafile)
+        # skip first line
+        next(reader)
+        # for each entry in file, insert values into table
+        for row in reader:
+            values = tuple(row)
+            c.execute('insert into contacts values (?,?,?,?)', values)
+            
+    # save database changes
+    conn.commit()
 
 if __name__ == '__main__':
-    main()
+    create_database()
