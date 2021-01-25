@@ -5,19 +5,23 @@
 import sqlite3 # database
 import create_database as create # create a sample database if it doesn't exist yet
 import utils # useful utility functions
+import sys # exiting program
 import os.path # file paths
 
 def main():
     # if database doesn't exist yet, ask user if they want an empty or sample one
     if not os.path.exists(create.db_file_name):
         create.create_database()
-    menuloop = True
-    while menuloop:
-        menuloop = menu()
+    
+    # connect to database
+    conn = sqlite3.connect(create.db_file_name)
+    c = conn.cursor()
+        
+    while True:
+        menu(conn, c)
 
 # displays a menu for a user to select an option
-# returns loop status
-def menu():
+def menu(conn, c):
     options = {
         'Create a new contact': create_contact,
         'Find a contact': find_contact,
@@ -27,22 +31,27 @@ def menu():
     }
     print('What would you like to do?')
     choice = utils.get_choice(options)
-    choice()
+    choice(conn, c)
     
 # create
-def create_contact():
+def create_contact(conn, c):
     pass
+
 # read
-def find_contact():
+def find_contact(conn, c):
     pass
+
 # update
-def update_contact():
+def update_contact(conn, c):
     pass
+
 # delete
-def delete_contact():
+def delete_contact(conn, c):
     pass
-def exit_program():
-    pass
+
+def exit_program(conn, c):
+    conn.close()
+    sys.exit()
 
 if __name__ == '__main__':
     main()
