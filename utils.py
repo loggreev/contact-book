@@ -36,3 +36,19 @@ def get_choice(options, text = ''):
             return options[choice]
         elif options_type == 'list':
             return options[choice]
+        
+# returns a list of choices selected by the user
+def get_choices(options, text = ''):
+    options.append('(Return)')
+    text += '\nChoose the (Return) option when you are done.'
+    choices = []
+    # loop until all options exhausted or user wants to return
+    while True:
+        choice = get_choice(options,text)
+        if choice == '(Return)':
+            break
+        options.remove(choice)
+        choices.append(choice)
+        if len(options) == 1:
+            break
+    return choices
