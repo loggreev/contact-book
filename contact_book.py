@@ -7,6 +7,7 @@ import create_database as create # create a sample database if it doesn't exist 
 import utils # useful utility functions
 import sys # exiting program
 import os.path # file paths
+import re # pattern searching
 
 def main():
     # if database doesn't exist yet, ask user if they want an empty or sample one
@@ -33,9 +34,30 @@ def menu(conn, c):
     choice = utils.get_choice(options)
     choice(conn, c)
     
+    # save changes to database
+    conn.commit()
+    
 # create
 def create_contact(conn, c):
-    pass
+    phone_number = input('Contact\'s phone number (###-###-####): ')
+    # phone number must be of the form ###-###-####
+    if not re.search(r'^\d{3}-\d{3}-\d{4}$', phone_number):
+        print('Invalid phone number.')
+        return
+    first_name = input('Contact\'s first name: ')
+    last_name = input('Contact\'s last name: ')
+    email = input('Contact\'s email address: ')
+    
+    values = (first_name, last_name, phone_number, email)
+    
+    try:
+        c.execute('insert into contacts values (?,?,?,?)', values)
+    except sqlite3.IntegrityError:
+        print('Error: Phone number already exists.')
+        return
+    else:
+        print('Contact added!')
+    
 
 # read
 def find_contact(conn, c):
