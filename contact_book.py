@@ -1,10 +1,11 @@
-# this program lets a user perform various actions on a contact book database
+# this program lets a user interact with a contact book database
 # table name is contacts
 # columns are phone_number, first_name, last_name, email
 
-import sqlite3 # database
 import create_database as create # create a sample database if it doesn't exist yet
 import utils # useful utility functions
+
+import sqlite3 # database
 import sys # exiting program
 import os.path # file paths
 import re # pattern searching
@@ -13,7 +14,8 @@ def main():
     # if database doesn't exist yet, ask user if they want an empty or sample one
     if not os.path.exists(create.db_file_name):
         create.create_database()
-        
+
+    # object for interacting with database
     sql = sqlite_connection()
         
     while True:
@@ -21,14 +23,15 @@ def main():
 
 # displays a menu for a user to select an option
 def menu(sql):
+    # run a function based on what user selects
     options = {
         'Create a new contact': create_contact,
-        'Find a contact': find_contact,
+        'Search for contacts': read_contacts,
         'Update a contact': update_contact,
         'Delete a contact': delete_contact,
+        'Print search results': print_contacts,
         'Exit program': exit_program
     }
-    # run a function based on what user selects
     choice = utils.get_choice(options, '\nWhat would you like to do?')
     choice(sql)
     
@@ -51,13 +54,14 @@ def create_contact(sql):
         print('Contact added!')
     
 # read certain data from the database and display it
-def find_contact(sql):
+def read_contacts(sql):
     # options that can be searched for
     options = ['Phone Number', 'First Name', 'Last Name', 'Email']
     choices = utils.get_choices(options, 'Which options do you want to search for?')
     
     # for each selected option ask user to provide a search term
-    print('Put a % before or after your search term if you want to find the term within the data.')
+    if choices:
+        print('Put a % before or after your search term if you want to find the term within the data.')
     search_for = []
     for choice in choices:
         if choice == 'Phone Number':
@@ -87,14 +91,17 @@ def find_contact(sql):
             query += ' and '
     
     sql.get_search_results(query, search_for_data)
+    print_contacts(sql)
     
-# update
+# updates an existing row
 def update_contact(sql):
     if not sql.search_results:
         print('You must search for a contact before you can update it.')
         return
     
     choice = utils.get_choice(sql.search_results, 'Choose a contact to update:')
+    print('Updating this contact:')
+    print_contacts(sql, (choice,))
     
     values = get_new_row()
     if values is None:
@@ -113,7 +120,7 @@ def update_contact(sql):
         print('Contact updated!')
         sql.search_results = None
 
-# delete
+# deletes an existing row
 def delete_contact(sql):
     if not sql.search_results:
         print('You must search for a contact before you can delete it.')
@@ -147,6 +154,16 @@ def get_new_row():
     email = input('Contact\'s email address: ')
     
     return (phone_number, first_name, last_name, email)
+
+# pretty print the provided contacts
+def print_contacts(sql, contacts = None):
+    if contacts is None:
+        if not sql.search_results:
+            print('You must search for some contacts first.')
+            return
+        contacts = sql.search_results
+    for result in contacts:
+        print(f'Phone #: {result[0]} | Name: {result[1] + " " + result[2]} | Email: {result[3]}')
     
 # class for handling sqlite3 database interaction
 class sqlite_connection:
@@ -162,12 +179,6 @@ class sqlite_connection:
         # run self query to fetch results
         self.c.execute(query, data)
         self.search_results = self.c.fetchall()
-        self.print_search_results()
-    
-    def print_search_results(self):
-        print()
-        for result in self.search_results:
-            print(f'Phone #: {result[0]} | Name: {result[1] + " " + result[2]} | Email: {result[3]}')
 
 if __name__ == '__main__':
     main()
