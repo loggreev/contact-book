@@ -111,10 +111,25 @@ def update_contact(sql):
         return
     else:
         print('Contact updated!')
+        sql.search_results = None
 
 # delete
 def delete_contact(sql):
-    pass
+    if not sql.search_results:
+        print('You must search for a contact before you can delete it.')
+        return
+    
+    choice = utils.get_choice(sql.search_results, 'Choose a contact to delete:')
+    
+    decision = input(f'Are you sure you want to delete this contact? (y/n)\n{choice}\n')
+    if decision != 'y':
+        print('Operation aborted.')
+        return
+    
+    query = 'delete from contacts where phone_number=? and first_name=? and last_name=? and email=?'
+    sql.c.execute(query, choice)
+    print('Contact deleted!')
+    sql.search_results = None
 
 def exit_program(sql):
     sql.conn.close()
@@ -147,11 +162,12 @@ class sqlite_connection:
         # run self query to fetch results
         self.c.execute(query, data)
         self.search_results = self.c.fetchall()
+        self.print_search_results()
+    
+    def print_search_results(self):
         print()
         for result in self.search_results:
-            # print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
-            print(result)
-        
+            print(f'Phone #: {result[0]} | Name: {result[1] + " " + result[2]} | Email: {result[3]}')
 
 if __name__ == '__main__':
     main()
