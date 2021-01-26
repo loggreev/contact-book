@@ -37,16 +37,9 @@ def menu(sql):
     
 # create new row in database
 def create_contact(sql):
-    phone_number = input('Contact\'s phone number (###-###-####): ')
-    # phone number must be of the form ###-###-####
-    if not re.search(r'^\d{3}-\d{3}-\d{4}$', phone_number):
-        print('Invalid phone number.')
+    values = get_new_row()
+    if values is None:
         return
-    first_name = input('Contact\'s first name: ')
-    last_name = input('Contact\'s last name: ')
-    email = input('Contact\'s email address: ')
-    
-    values = (phone_number, first_name, last_name, email)
     
     try:
         sql.c.execute('insert into contacts values (?,?,?,?)', values)
@@ -97,7 +90,27 @@ def find_contact(sql):
     
 # update
 def update_contact(sql):
-    pass
+    if not sql.search_results:
+        print('You must search for a contact before you can update it.')
+        return
+    
+    choice = utils.get_choice(sql.search_results, 'Choose a contact to update:')
+    
+    values = get_new_row()
+    if values is None:
+        return
+    values += choice
+    query =  'update contacts set phone_number=?, first_name=?, last_name=?, email=? '
+    query += 'where phone_number=? and first_name=? and last_name=? and email=?'
+    
+    try:
+        sql.c.execute(query, values)
+    # phone number is a primary key
+    except sqlite3.IntegrityError:
+        print('Error: Phone number already exists.')
+        return
+    else:
+        print('Contact updated!')
 
 # delete
 def delete_contact(sql):
@@ -106,6 +119,19 @@ def delete_contact(sql):
 def exit_program(sql):
     sql.conn.close()
     sys.exit()
+    
+# gets data from the user for a new table row and returns it
+def get_new_row():
+    phone_number = input('Contact\'s phone number (###-###-####): ')
+    # phone number must be of the form ###-###-####
+    if not re.search(r'^\d{3}-\d{3}-\d{4}$', phone_number):
+        print('Invalid phone number.')
+        return None
+    first_name = input('Contact\'s first name: ')
+    last_name = input('Contact\'s last name: ')
+    email = input('Contact\'s email address: ')
+    
+    return (phone_number, first_name, last_name, email)
     
 # class for handling sqlite3 database interaction
 class sqlite_connection:
@@ -121,8 +147,10 @@ class sqlite_connection:
         # run self query to fetch results
         self.c.execute(query, data)
         self.search_results = self.c.fetchall()
+        print()
         for result in self.search_results:
-            print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
+            # print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
+            print(result)
         
 
 if __name__ == '__main__':
