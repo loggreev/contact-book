@@ -13,16 +13,14 @@ def main():
     # if database doesn't exist yet, ask user if they want an empty or sample one
     if not os.path.exists(create.db_file_name):
         create.create_database()
-    
-    # connect to database
-    conn = sqlite3.connect(create.db_file_name)
-    c = conn.cursor()
+        
+    sql = sqlite_connection()
         
     while True:
-        menu(conn, c)
+        menu(sql)
 
 # displays a menu for a user to select an option
-def menu(conn, c):
+def menu(sql):
     options = {
         'Create a new contact': create_contact,
         'Find a contact': find_contact,
@@ -32,13 +30,13 @@ def menu(conn, c):
     }
     # run a function based on what user selects
     choice = utils.get_choice(options, '\nWhat would you like to do?')
-    choice(conn, c)
+    choice(sql)
     
     # save changes to database
-    conn.commit()
+    sql.conn.commit()
     
 # create new row in database
-def create_contact(conn, c):
+def create_contact(sql):
     phone_number = input('Contact\'s phone number (###-###-####): ')
     # phone number must be of the form ###-###-####
     if not re.search(r'^\d{3}-\d{3}-\d{4}$', phone_number):
@@ -51,7 +49,7 @@ def create_contact(conn, c):
     values = (phone_number, first_name, last_name, email)
     
     try:
-        c.execute('insert into contacts values (?,?,?,?)', values)
+        sql.c.execute('insert into contacts values (?,?,?,?)', values)
     # phone number is a primary key
     except sqlite3.IntegrityError:
         print('Error: Phone number already exists.')
@@ -60,7 +58,7 @@ def create_contact(conn, c):
         print('Contact added!')
     
 # read certain data from the database and display it
-def find_contact(conn, c):
+def find_contact(sql):
     # options that can be searched for
     options = ['Phone Number', 'First Name', 'Last Name', 'Email']
     choices = utils.get_choices(options, 'Which options do you want to search for?')
@@ -84,34 +82,48 @@ def find_contact(conn, c):
             
     search_for_data = tuple([data[1] for data in search_for])
     
-    # construct sql statement to execute
-    sql = 'select * from contacts'
+    # construct query statement to execute
+    query = 'select * from contacts'
     if search_for:
-        sql += ' where '
+        query += ' where '
     for i, data in enumerate(search_for):
         # question marks are placeholders
-        sql += f'{data[0]} like ?'
+        query += f'{data[0]} like ?'
         # if more things to search for
         if i+1 != len(search_for):
-            sql += ' and '
+            query += ' and '
     
-    # run sql query to fetch results
-    c.execute(sql, search_for_data)
-    results = c.fetchall()
-    for result in results:
-        print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
+    sql.get_search_results(query, search_for_data)
     
 # update
-def update_contact(conn, c):
+def update_contact(sql):
     pass
 
 # delete
-def delete_contact(conn, c):
+def delete_contact(sql):
     pass
 
-def exit_program(conn, c):
-    conn.close()
+def exit_program(sql):
+    sql.conn.close()
     sys.exit()
+    
+# class for handling sqlite3 database interaction
+class sqlite_connection:
+    def __init__(self):
+        # connect to database
+        self.conn = sqlite3.connect(create.db_file_name)
+        # used for queries
+        self.c = self.conn.cursor()
+        # results of last search
+        self.search_results = None
+        
+    def get_search_results(self, query, data):
+        # run self query to fetch results
+        self.c.execute(query, data)
+        self.search_results = self.c.fetchall()
+        for result in self.search_results:
+            print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
+        
 
 if __name__ == '__main__':
     main()
