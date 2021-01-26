@@ -30,13 +30,14 @@ def menu(conn, c):
         'Delete a contact': delete_contact,
         'Exit program': exit_program
     }
+    # run a function based on what user selects
     choice = utils.get_choice(options, '\nWhat would you like to do?')
     choice(conn, c)
     
     # save changes to database
     conn.commit()
     
-# create
+# create new row in database
 def create_contact(conn, c):
     phone_number = input('Contact\'s phone number (###-###-####): ')
     # phone number must be of the form ###-###-####
@@ -51,19 +52,21 @@ def create_contact(conn, c):
     
     try:
         c.execute('insert into contacts values (?,?,?,?)', values)
+    # phone number is a primary key
     except sqlite3.IntegrityError:
         print('Error: Phone number already exists.')
         return
     else:
         print('Contact added!')
     
-
-# read
+# read certain data from the database and display it
 def find_contact(conn, c):
+    # options that can be searched for
     options = ['Phone Number', 'First Name', 'Last Name', 'Email']
     choices = utils.get_choices(options, 'Which options do you want to search for?')
     
-    print('Put a % before or after your term if you want to find the term within the data.')
+    # for each selected option ask user to provide a search term
+    print('Put a % before or after your search term if you want to find the term within the data.')
     search_for = []
     for choice in choices:
         if choice == 'Phone Number':
@@ -86,19 +89,18 @@ def find_contact(conn, c):
     if search_for:
         sql += ' where '
     for i, data in enumerate(search_for):
+        # question marks are placeholders
         sql += f'{data[0]} like ?'
-        # more things to search for
+        # if more things to search for
         if i+1 != len(search_for):
             sql += ' and '
     
-    # print(sql)
-    # print(search_for_data)
+    # run sql query to fetch results
     c.execute(sql, search_for_data)
     results = c.fetchall()
     for result in results:
         print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
     
-
 # update
 def update_contact(conn, c):
     pass
