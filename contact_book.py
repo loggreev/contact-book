@@ -30,8 +30,7 @@ def menu(conn, c):
         'Delete a contact': delete_contact,
         'Exit program': exit_program
     }
-    print('What would you like to do?')
-    choice = utils.get_choice(options)
+    choice = utils.get_choice(options, '\nWhat would you like to do?')
     choice(conn, c)
     
     # save changes to database
@@ -61,7 +60,44 @@ def create_contact(conn, c):
 
 # read
 def find_contact(conn, c):
-    pass
+    options = ['Phone Number', 'First Name', 'Last Name', 'Email']
+    choices = utils.get_choices(options, 'Which options do you want to search for?')
+    
+    print('Put a % before or after your term if you want to find the term within the data.')
+    search_for = []
+    for choice in choices:
+        if choice == 'Phone Number':
+            i = input('Phone number to search for: ')
+            search_for.append(('phone_number', i))
+        elif choice == 'First Name':
+            i = input('First name to search for: ')
+            search_for.append(('first_name', i))
+        elif choice == 'Last Name':
+            i = input('Last name to search for: ')
+            search_for.append(('last_name', i))
+        elif choice == 'Email':
+            i = input('Email to search for: ')
+            search_for.append(('email', i))
+            
+    search_for_data = tuple([data[1] for data in search_for])
+    
+    # construct sql statement to execute
+    sql = 'select * from contacts'
+    if search_for:
+        sql += ' where '
+    for i, data in enumerate(search_for):
+        sql += f'{data[0]} like ?'
+        # more things to search for
+        if i+1 != len(search_for):
+            sql += ' and '
+    
+    # print(sql)
+    # print(search_for_data)
+    c.execute(sql, search_for_data)
+    results = c.fetchall()
+    for result in results:
+        print(f'Phone #: {result[0]}\nName: {result[1] + " " + result[2]}\nEmail: {result[3]}\n')
+    
 
 # update
 def update_contact(conn, c):
